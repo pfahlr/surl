@@ -1,0 +1,26 @@
+
+task_id: 11_analytics_full
+name: "Analytics full mode: visits table + anonymization toggles"
+summary: >
+  Add `full` analytics mode with optional storage of IP/UA/referer and IP anonymization
+  (IPv4 /24, IPv6 /64). Extend stats endpoint.
+rationale: Privacy-aware analytics for richer insights.
+libraries:
+  - ipnet
+  - uaparser (optional)
+files_to_create_or_modify:
+  - src/analytics.rs
+  - src/routes/public.rs (record_hit logic)
+  - src/routes/account.rs (/me/links/{id}/stats)
+  - tests/analytics_full_test.rs
+steps:
+  - Implement anonymization helpers.
+  - Insert visit rows when mode=full honoring toggles.
+  - Stats: daily counts query; fallback message if mode != full.
+commands_to_run:
+  - cargo test --features postgres -- analytics_full
+  - cargo test --features sqlite -- analytics_full
+acceptance_criteria:
+  - Tests confirm anonymization and visit insertion toggles.
+commit_message_template: |
+  feat(analytics): full mode with IP anonymization + basic stats

@@ -1,0 +1,27 @@
+
+task_id: 09_login_and_session
+name: "Login by token (stateless cookie), /me/links skeleton"
+summary: >
+  Implement POST /login to accept account token, verify against stored hash, and
+  set a signed, httpOnly cookie. Create /me/links GET returning placeholder SSR list.
+rationale: Enables token-based management without storing plaintext tokens.
+libraries:
+  - axum-extra (cookies) or axum headers + cookie crate
+  - argon2
+files_to_create_or_modify:
+  - src/routes/session.rs
+  - src/routes/account.rs (add /me/links GET)
+  - templates/me_links.html (if using Askama/Maud) or plain HTML
+  - tests/session_test.rs
+steps:
+  - Verify submitted token by hashing and comparing.
+  - Do not log plaintext token; add redactions in tracing on sensitive fields.
+  - Set cookie with short-lived signed session token (not the account token).
+  - Implement auth extractor to load account_id from cookie.
+commands_to_run:
+  - cargo test --features postgres -- session
+  - cargo test --features sqlite -- session
+acceptance_criteria:
+  - Login succeeds with valid token and fails with wrong token.
+commit_message_template: |
+  feat(session): token login + signed cookie + /me/links skeleton

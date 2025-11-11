@@ -1,0 +1,26 @@
+
+task_id: 13_security_hardening
+name: "Security: rate limit, reserved slugs, proxy trust, CSP"
+summary: >
+  Add tower-governor rate limits, enforce reserved slugs at creation, trust proxy
+  headers only from configured CIDRs, and set a minimal CSP.
+rationale: Reduce abuse surface and header spoofing risks.
+libraries:
+  - tower-governor (or governor)
+  - ipnet
+files_to_create_or_modify:
+  - src/security.rs
+  - src/routes/account.rs (integrate reserved slugs check)
+  - src/main.rs (middleware layering and CSP headers)
+  - tests/security_test.rs
+steps:
+  - Implement rate limiter on POST /shorten and auth routes.
+  - Implement proxy trust check for X-Forwarded-For.
+  - Add CSP header via tower-http.
+commands_to_run:
+  - cargo test --features postgres -- security
+  - cargo test --features sqlite -- security
+acceptance_criteria:
+  - Tests validate limiting behavior and header trust logic.
+commit_message_template: |
+  feat(sec): rate limits, reserved slugs, proxy trust, CSP

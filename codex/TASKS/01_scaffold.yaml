@@ -1,0 +1,39 @@
+
+task_id: 01_scaffold
+name: "Project scaffold: Cargo, features, deps, healthz"
+summary: >
+  Initialize a new Rust project `shorty`, set up Cargo features for postgres/sqlite,
+  add core dependencies, wire logging, config loader, and a /healthz route.
+rationale: >
+  Establishes the base structure with compile-time DB switching (Option A), ensuring
+  subsequent tasks build on a consistent scaffold.
+libraries:
+  - axum
+  - tokio
+  - tower, tower-http
+  - tracing, tracing-subscriber
+  - serde, serde_json
+  - config
+  - sqlx (no default features)
+files_to_create_or_modify:
+  - Cargo.toml
+  - src/main.rs
+  - src/config.rs
+  - .gitignore
+  - .env.example
+steps:
+  - Create a new Rust binary project `shorty`.
+  - Add dependencies and features in Cargo.toml with `postgres` and `sqlite` flags.
+  - Implement config loader reading env (ADDR, DATABASE_URL, POOL_MAX, FORCE_STATUS_301).
+  - Implement /healthz GET route returning 200 and body "ok".
+  - Add tracing init with env filter.
+commands_to_run:
+  - cargo fmt --all
+  - cargo clippy -- -D warnings
+  - cargo run --features sqlite
+  - curl -sf localhost:8080/healthz
+acceptance_criteria:
+  - Program starts without errors using sqlite feature.
+  - GET /healthz returns 200 with body "ok".
+commit_message_template: |
+  chore(scaffold): init project, features (postgres/sqlite), config + /healthz

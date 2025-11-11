@@ -1,0 +1,21 @@
+
+task_id: 05_models_and_types
+name: "Common types: DTOs and helpers"
+summary: >
+  Define serializable structs for requests/responses and shared types.
+rationale: Keep handler code clean and testable.
+libraries:
+  - serde
+files_to_create_or_modify:
+  - src/models.rs
+steps:
+  - Add CreateLinkForm { url, account_token? }.
+  - Add LinkHit { id, target_url }.
+  - Add basic error type if useful.
+commands_to_run:
+  - cargo check --features postgres
+  - cargo check --features sqlite
+acceptance_criteria:
+  - Code compiles with both features.
+commit_message_template: |
+  feat(models): add DTOs for link creation and redirect

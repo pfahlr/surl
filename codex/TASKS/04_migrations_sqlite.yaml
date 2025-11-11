@@ -1,0 +1,22 @@
+
+task_id: 04_migrations_sqlite
+name: "SQLite migrations: accounts, links, settings, link_visits"
+summary: >
+  Write SQLite schema aligned with PG (TEXT for timestamps/ip), enabling WAL.
+rationale: >
+  Supports local/demo and edge-like deployments; parity fields with PG.
+libraries:
+  - sqlx-cli (dev tool)
+files_to_create_or_modify:
+  - migrations/sqlite/0001_init.sql
+steps:
+  - Create tables: accounts, links, settings, link_visits (AUTOINCREMENT ids where appropriate).
+  - INSERT settings row with id=1.
+  - Create unique index on links.slug.
+commands_to_run:
+  - sqlx database create --database-url $DATABASE_URL
+  - sqlx migrate run --source migrations/sqlite --database-url $DATABASE_URL
+acceptance_criteria:
+  - Migration runs clean on SQLite (file in /tmp ok).
+commit_message_template: |
+  feat(db/sqlite): add initial sqlite schema and indexes

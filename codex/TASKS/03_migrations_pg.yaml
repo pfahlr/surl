@@ -1,0 +1,22 @@
+
+task_id: 03_migrations_pg
+name: "Postgres migrations: accounts, links, settings, link_visits"
+summary: >
+  Write initial Postgres schema with unique slug, hashed tokens, optional visits table.
+rationale: >
+  Provides durable, concurrent-friendly storage for production deployments.
+libraries:
+  - sqlx-cli (dev tool)
+files_to_create_or_modify:
+  - migrations/postgres/0001_init.sql
+steps:
+  - Create tables: accounts, links, settings, link_visits (see spec).
+  - Unique index on links.slug.
+  - Seed a singleton settings row if needed.
+commands_to_run:
+  - sqlx database create --database-url $DATABASE_URL
+  - sqlx migrate run --source migrations/postgres --database-url $DATABASE_URL
+acceptance_criteria:
+  - Migration runs clean on a local Postgres and tables exist.
+commit_message_template: |
+  feat(db/pg): add initial postgres schema and indexes

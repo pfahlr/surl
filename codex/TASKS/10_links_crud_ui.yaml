@@ -1,0 +1,24 @@
+
+task_id: 10_links_crud_ui
+name: "/me/links CRUD: list, create, edit, delete (SSR)"
+summary: >
+  Server-rendered management page to list the account's links and perform CRUD,
+  with create form at top. Invalidate cache on edit/delete.
+rationale: Minimal JS, accessible management workflow.
+libraries:
+  - askama or maud
+files_to_create_or_modify:
+  - src/routes/account.rs (handlers)
+  - templates/me_links.html
+  - tests/links_crud_test.rs
+steps:
+  - Implement queries for listing links by account_id.
+  - Implement POST endpoints for create under session, edit target_url, delete.
+  - Evict cache entries on edit/delete.
+commands_to_run:
+  - cargo test --features postgres -- links_crud
+  - cargo test --features sqlite -- links_crud
+acceptance_criteria:
+  - CRUD tests pass; cache entries evicted appropriately.
+commit_message_template: |
+  feat(ui): /me/links SSR CRUD with cache invalidation

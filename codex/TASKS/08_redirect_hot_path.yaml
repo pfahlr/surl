@@ -1,0 +1,26 @@
+
+task_id: 08_redirect_hot_path
+name: "GET /{slug}: moka cache + redirect + count_only"
+summary: >
+  Implement fast redirect path using moka cache; support analytics mode `none` and
+  `count_only` (atomic counter). Redirect status is configurable (301/302).
+rationale: Maximize performance on the most frequent request.
+libraries:
+  - moka
+  - tower-http (set headers, tracing)
+files_to_create_or_modify:
+  - src/routes/public.rs
+  - src/main.rs (route wiring)
+  - tests/redirect_test.rs
+steps:
+  - Build AppState with DbPool, Cache, force_301 flag.
+  - Implement cache lookup; on miss, DB read, populate cache.
+  - Implement count_only increment per backend (dialect-specific SQL).
+  - Return redirect with LOCATION header.
+commands_to_run:
+  - cargo test --features postgres -- redirect
+  - cargo test --features sqlite -- redirect
+acceptance_criteria:
+  - Tests prove redirect works and counter increments in count_only mode.
+commit_message_template: |
+  feat(redirect): moka cache + configurable status + count_only analytics

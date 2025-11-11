@@ -1,0 +1,22 @@
+
+task_id: 16_load_tests
+name: "Load tests (k6/wrk) scenarios"
+summary: >
+  Add simple load scenarios for cached redirects, cold redirects, and create bursts.
+rationale: Validate performance targets and guardrails.
+libraries:
+  - k6 (scripts)
+files_to_create_or_modify:
+  - load/k6_redirect_cached.js
+  - load/k6_redirect_cold.js
+  - load/k6_create_burst.js
+  - docs/PERF.md
+steps:
+  - Write scripts with configurable BASE_URL and SLUG.
+  - Document target latency and throughput goals.
+commands_to_run:
+  - k6 run load/k6_redirect_cached.js
+acceptance_criteria:
+  - Scripts run and produce baseline metrics documented in PERF.md.
+commit_message_template: |
+  chore(load): add k6 scenarios and PERF.md baseline

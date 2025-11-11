@@ -1,0 +1,21 @@
+
+task_id: 17_docs_ops
+name: "Docs: README, OPERATIONS, SECURITY"
+summary: >
+  Author concise docs for setup, operations, and security posture.
+rationale: Improves maintainability and onboarding.
+libraries: []
+files_to_create_or_modify:
+  - README.md
+  - OPERATIONS.md
+  - SECURITY.md
+steps:
+  - README: quickstart for pg/sqlite, features, env vars.
+  - OPERATIONS: backup/restore, migrations, toggling analytics.
+  - SECURITY: token handling, logs redaction, rate limits.
+commands_to_run:
+  - npx markdownlint-cli2 "**/*.md"
+acceptance_criteria:
+  - Docs render well and contain environment-specific instructions.
+commit_message_template: |
+  docs: add README, OPERATIONS, and SECURITY

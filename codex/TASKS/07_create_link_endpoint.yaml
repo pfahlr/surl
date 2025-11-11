@@ -1,0 +1,31 @@
+
+task_id: 07_create_link_endpoint
+name: "POST /shorten: create link, new-or-existing account"
+summary: >
+  Implement the create endpoint that accepts url + optional account_token.
+  Hash tokens with argon2 and associate links to the account; if no token,
+  generate new token and return it once. Enforce reserved slugs and slug policy.
+rationale: Core creation workflow with security best practices.
+libraries:
+  - argon2
+  - rand, uuid
+  - url (validation)
+files_to_create_or_modify:
+  - src/routes/account.rs
+  - src/routes/mod.rs
+  - src/main.rs (route wiring)
+  - tests/create_link_test.rs
+steps:
+  - Implement token hashing & account lookup/create.
+  - Implement slug generation with utility from 06.
+  - Validate URL is absolute http/https.
+  - Collision retries (up to 8), return 409 on exhaustion.
+  - Reserved slug check.
+  - Integration test for happy path and collisions.
+commands_to_run:
+  - cargo test --features postgres -- create_link
+  - cargo test --features sqlite -- create_link
+acceptance_criteria:
+  - Tests pass in both backends; new token returned only when created.
+commit_message_template: |
+  feat(api): POST /shorten with account token flow and slug policy enforcement

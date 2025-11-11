@@ -1,0 +1,23 @@
+
+task_id: 18_polish_and_qol
+name: "Polish: reserved slugs list, URL probe (optional), UX copy"
+summary: >
+  Add reserved slugs list management, optional HEAD probe for URLs, and refine
+  UX copy for token display and admin warnings about 301 caching.
+rationale: Better UX and fewer bad inputs.
+libraries:
+  - reqwest (optional for HEAD)
+files_to_create_or_modify:
+  - src/routes/account.rs (create validation enhancements)
+  - templates/*.html (copy tweaks)
+  - tests/url_validation_test.rs
+steps:
+  - Add optional HEAD probe with timeout; feature-flag if desired.
+  - Improve copy when showing new token (save instructions).
+  - Tests for invalid URLs.
+commands_to_run:
+  - cargo test --features postgres -- url_validation
+acceptance_criteria:
+  - Enhanced validation works; copy improved.
+commit_message_template: |
+  feat(qol): reserved slugs management, optional URL probe, improved UX copy

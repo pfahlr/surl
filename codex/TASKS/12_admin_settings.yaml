@@ -1,0 +1,26 @@
+
+task_id: 12_admin_settings
+name: "Admin settings: regex, analytics mode, reserved slugs"
+summary: >
+  Add GET/POST /admin/settings with env-guarded token; apply new regex to future
+  creations and recompute allow_chars/min_max.
+rationale: Runtime configurability without rebuilds.
+libraries:
+  - axum (headers)
+  - regex
+files_to_create_or_modify:
+  - src/routes/admin.rs
+  - src/slug_policy.rs (expose recompute)
+  - templates/admin_settings.html
+  - tests/admin_settings_test.rs
+steps:
+  - Require header `X-Admin-Token` == env ADMIN_TOKEN.
+  - Persist settings in DB and in-memory cached copy.
+  - Rebuild allowed charset immediately after update.
+commands_to_run:
+  - cargo test --features postgres -- admin
+  - cargo test --features sqlite -- admin
+acceptance_criteria:
+  - Admin can change regex/mode; new links reflect new policy.
+commit_message_template: |
+  feat(admin): settings UI + regex/mode updates with cache

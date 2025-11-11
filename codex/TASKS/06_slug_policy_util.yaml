@@ -1,0 +1,22 @@
+
+task_id: 06_slug_policy_util
+name: "Slug policy: regex -> allowed charset + min/max"
+summary: >
+  Implement a utility that parses admin regex (default ^[A-Za-z0-9]{5,10}$),
+  intersects with RFC3986 path-safe set, and returns allow_chars/min_len/max_len.
+rationale: Ensures generated slugs are URL-safe per admin intent.
+libraries:
+  - regex
+files_to_create_or_modify:
+  - src/slug_policy.rs
+  - tests/slug_policy_test.rs
+steps:
+  - Implement parse function: (regex_str) -> { allow_chars: Vec<char>, min_len, max_len }.
+  - Include fallback to default if intersection is empty or invalid.
+  - Unit tests: several regex variants including invalid chars.
+commands_to_run:
+  - cargo test --features sqlite -- slug_policy
+acceptance_criteria:
+  - Tests prove invalid chars excluded; min/max detected correctly.
+commit_message_template: |
+  feat(slug): regex-to-charset utility with tests

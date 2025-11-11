@@ -1,0 +1,22 @@
+
+task_id: 14_observability_ci
+name: "Observability + CI matrix (pg/sqlite)"
+summary: >
+  Add structured request logs, and GitHub Actions to build & test both features.
+rationale: Catch regressions and ensure parity across DBs.
+libraries:
+  - tracing, tracing-subscriber
+files_to_create_or_modify:
+  - .github/workflows/ci.yaml
+  - src/main.rs (trace layer)
+  - README.md (badges and run instructions)
+steps:
+  - Configure tower-http trace layer with redaction of sensitive fields.
+  - CI matrix builds/test: features postgres and sqlite.
+commands_to_run:
+  - cargo test --features postgres
+  - cargo test --features sqlite
+acceptance_criteria:
+  - CI passes for both features.
+commit_message_template: |
+  ci: add matrix for postgres/sqlite and request tracing

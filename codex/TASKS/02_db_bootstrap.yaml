@@ -1,0 +1,26 @@
+
+task_id: 02_db_bootstrap
+name: "DB connector + migrator wiring (feature-gated)"
+summary: >
+  Implement DbPool alias, connect_and_migrate function, and feature-gated migrators
+  for postgres and sqlite.
+rationale: >
+  Establish DB connectivity with sqlx and per-dialect migration folders.
+libraries:
+  - sqlx (PgPool, SqlitePool, migrate!)
+files_to_create_or_modify:
+  - src/db.rs
+  - migrations/postgres/ (empty placeholder)
+  - migrations/sqlite/ (empty placeholder)
+steps:
+  - Create src/db.rs with DbPool type alias behind cfg flags.
+  - Implement connect_and_migrate(AppConfig) using PgPoolOptions/SqlitePoolOptions.
+  - For sqlite, set PRAGMA WAL and synchronous=NORMAL.
+  - Add static MIGRATOR using sqlx::migrate! pointing to dialect-specific dirs.
+commands_to_run:
+  - cargo check --features postgres
+  - cargo check --features sqlite
+acceptance_criteria:
+  - `cargo check` succeeds for both features.
+commit_message_template: |
+  feat(db): add DbPool + connect_and_migrate with feature-gated migrators

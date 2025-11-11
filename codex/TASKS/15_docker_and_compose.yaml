@@ -1,0 +1,22 @@
+
+task_id: 15_docker_and_compose
+name: "Dockerfiles + compose (pg), Make targets"
+summary: >
+  Provide multi-stage Dockerfile with build-arg DB, and docker-compose for Postgres.
+rationale: Reproducible deployment artifacts.
+libraries: []
+files_to_create_or_modify:
+  - Dockerfile
+  - docker-compose.yml
+  - Makefile
+steps:
+  - Implement Dockerfile building with --build-arg DB=postgres|sqlite.
+  - Compose with postgres:16 and app service.
+  - Make targets: build/run/test for both features.
+commands_to_run:
+  - docker build -t shorty:pg --build-arg DB=postgres .
+  - docker compose up -d --build
+acceptance_criteria:
+  - App responds on :8080 via compose network; /healthz 200.
+commit_message_template: |
+  chore(docker): multi-stage image and compose with pg
