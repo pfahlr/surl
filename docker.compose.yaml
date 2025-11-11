@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: surl
+    ports: ["5432:5432"]
+
+  app:
+    build:
+      context: .
+      args: { DB: postgres }
+    environment:
+      SURL_ADDR: "0.0.0.0:8080"
+      SURL_DATABASE_URL: "postgres://postgres:postgres@db:5432/surl"
+      SURL_POOL_MAX: "16"
+      SURL_FORCE_STATUS_301: "true"
+    ports: ["8080:8080"]
+    depends_on: [db]

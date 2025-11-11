@@ -1,4 +1,3 @@
-````md
 # SURL — SURL URL Redirector for Links
 
 Ultra-fast Rust link shortener with cache-first redirects, compile-time-selectable databases (Postgres **or** SQLite), admin-configurable slug policy, and privacy-aware analytics.
