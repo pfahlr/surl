@@ -1,0 +1,18 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: { db: [postgres, sqlite] }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build & test (${{ matrix.db }})
+        run: |
+          if [ "${{ matrix.db }}" = "postgres" ]; then
+            cargo test --features postgres
+          else
+            cargo test --features sqlite
+          fi
