@@ -29,7 +29,7 @@ Ultra-fast Rust link shortener with cache-first redirects, compile-time-selectab
 
 ### 2) Clone & build
 ```bash
-git clone https://github.com/your-org/surl.git
+git clone https://github.com/pfahlr/surl.git
 cd surl
 ````
 
