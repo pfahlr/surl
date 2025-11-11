@@ -1,0 +1,243 @@
+### Instruction
+
+You are the **CODEX Agent** working in the `pfahlr/surl` repo. Your job is to bring the repository to a **good baseline state** so development can proceed per `codex/TASKS/*`.
+
+You MUST:
+
+* Follow **TDD** where applicable (create minimal tests if they help verify wiring).
+* Keep **2-space** indentation across all files.
+* Ensure both DB feature builds compile: `--features postgres` and `--features sqlite`.
+* Verify commands locally in your Codex environment.
+* Make a single, scoped commit with the message provided at the end.
+* Do **not** push.
+
+You SHOULD:
+
+* Prefer small, well-named modules and functions.
+* Never log plaintext account tokens (store only hashes in the future tasks).
+* Leave helpful doc comments where behavior is non-obvious.
+
+**Relevant libraries** we will rely on or prepare for next tasks:
+
+* Web: `axum`, `tower`, `tower-http`
+* Async: `tokio`
+* DB: `sqlx` (feature-gated `postgres`/`sqlite`)
+* Config/serde: `config`, `serde`, `serde_json`
+* (Coming soon) `argon2`, `moka`, `regex`, `uaparser`, `tower-governor`, `askama/maud`
+
+---
+
+### Objectives (baseline)
+
+1. **Docs fixed & up to date**
+
+   * README uses correct clone URL and has **properly closed code fences**.
+   * `.env.example` exists and matches README’s “Quickstart”.
+
+2. **Buildable app scaffold (Axum)**
+
+   * Minimal server boots, serves `GET /healthz -> "ok"`.
+   * `Cargo.toml` has **feature-gated** DB support:
+
+     * `[features]` with `postgres = ["sqlx/postgres","sqlx/runtime-tokio-rustls"]`
+     * `sqlite = ["sqlx/sqlite","sqlx/runtime-tokio-rustls"]`
+     * `default = ["postgres"]` (ok if already present)
+   * Base modules exist: `src/{app.rs,config.rs,db.rs,models.rs,slug_policy.rs}` and `src/routes/{mod.rs,public.rs,account.rs,session.rs,admin.rs}` (empty placeholders ok except where noted below).
+
+3. **Migrations present (per-dialect)**
+
+   * `migrations/postgres/0001_init.sql` and `migrations/sqlite/0001_init.sql` include tables: `accounts`, `links`, `settings`, `link_visits` with reasonable defaults and unique index on `links.slug`.
+
+4. **Developer ergonomics**
+
+   * `.gitignore`, `.editorconfig (2 spaces)`, `LICENSE` (MIT).
+   * CI workflow builds both features and runs migrations.
+   * **Compose filename is `compose.yaml`** (rename from `docker.compose.yaml` if present) and README shows `docker compose up -d`.
+
+5. **Optional (nice-to-have)**
+
+   * Prepare SQLx offline metadata or add a README “Dev tips” note explaining how to run `cargo sqlx prepare` for offline builds. If you wire it now, add `cargo sqlx prepare --check` to CI as a non-blocking step.
+
+---
+
+### Required changes (make them idempotent)
+
+1. **README**
+
+   * Replace any `your-org` clone line with `https://github.com/pfahlr/surl.git`.
+   * Ensure every code/demo section is fenced (`bash / `env / ```yaml).
+   * Add a short “Docker Compose (PG)” snippet after the Quickstart:
+
+     ```bash
+     docker compose up -d
+     curl -sf http://localhost:8080/healthz
+     ```
+
+2. **`.env.example`**
+   Create or update with:
+
+   ```env
+   SURL_ADDR=0.0.0.0:8080
+   SURL_DATABASE_URL=postgres://postgres:postgres@localhost:5432/surl
+   SURL_POOL_MAX=16
+   SURL_FORCE_STATUS_301=true
+   SURL_RESERVED_SLUGS=admin,login,me,shorten,healthz,assets,static,api
+   SURL_ANALYTICS_MODE=count_only
+   SURL_SLUG_REGEX=^[A-Za-z0-9]{5,10}$
+   SURL_IP_ANONYMIZE=true
+   SURL_PROXY_TRUST_CIDRS=127.0.0.1/32
+   SURL_ADMIN_TOKEN=change-me
+   # SQLite fast demo:
+   # SURL_DATABASE_URL=sqlite:////dev/shm/surl.sqlite?mode=rwc
+   ```
+
+3. **`Cargo.toml`**
+
+   * Ensure the dependencies include (min versions ok; don’t downgrade if newer present):
+
+     ```toml
+     axum = "0.7"
+     tokio = { version = "1", features = ["rt-multi-thread","macros"] }
+     tower = "0.4"
+     tower-http = { version = "0.5", features = ["trace"] }
+     tracing = "0.1"
+     tracing-subscriber = { version = "0.3", features = ["env-filter","fmt"] }
+     serde = { version = "1", features = ["derive"] }
+     serde_json = "1"
+     config = "0.14"
+     sqlx = { version = "0.7", default-features = false }
+     ```
+   * Ensure features block exists exactly once and matches Objective 2.
+
+4. **`src/main.rs` & base modules**
+
+   * `src/main.rs` should:
+
+     * init tracing,
+     * load config from env (`AppConfig::from_env()`),
+     * connect and run migrations (`db::connect_and_migrate(&cfg)`),
+     * build a router with `GET /healthz` + merged route modules,
+     * start server on `SURL_ADDR`.
+   * Add minimal `src/app.rs` with `AppState { cfg, pool }`.
+   * Add `src/config.rs` that reads env vars listed in `.env.example` (use sane defaults if absent).
+   * Add `src/db.rs`:
+
+     * `type DbPool = PgPool | SqlitePool` behind features.
+     * `static MIGRATOR` pointing at the **dialect subdir**.
+     * SQLite PRAGMAs: `WAL` + `synchronous=NORMAL`.
+   * Add placeholders:
+
+     * `src/models.rs` (DTOs will come later; just stub now).
+     * `src/slug_policy.rs` with URL-safe charset constant and a minimal `from_regex()` stub returning defaults `(allow_chars = URL_SAFE, 5..10)`.
+     * `src/routes/{mod.rs,public.rs,account.rs,session.rs,admin.rs}` where `public.rs` defines `/` landing string; others can be empty routers for now.
+
+5. **Migrations**
+
+   * Ensure the **Postgres** and **SQLite** `0001_init.sql` schemas each create:
+
+     * `accounts(id, token_hash, created_at)`
+     * `links(id, account_id, slug UNIQUE, target_url, hit_count, created_at, updated_at)`
+     * `settings(id=1, slug_regex, analytics_mode, reserved_slugs, ip_anonymize)` with a bootstrap row
+     * `link_visits(id, link_id, ts, ip, user_agent, referer)` + index `(link_id, ts)`
+   * Keep types appropriate per dialect (e.g., `TIMESTAMPTZ` vs `TEXT`).
+
+6. **Repo hygiene**
+
+   * Add/ensure:
+
+     * `.gitignore` (Rust, env, sqlite files)
+     * `.editorconfig` (2 spaces)
+     * `LICENSE` (MIT)
+   * **Rename** `docker.compose.yaml` → `compose.yaml` if the former exists; update README wording to “docker compose …”.
+
+7. **CI** (`.github/workflows/ci.yaml`)
+
+   * Two jobs:
+
+     1. `fmt_clippy`: run `cargo fmt --all --check` and `cargo clippy -D warnings`.
+     2. `build_and_migrate` with matrix `{postgres, sqlite}`:
+
+        * For PG: spin a `postgres:16` service; set `DATABASE_URL=postgres://postgres:postgres@localhost:5432/surl`.
+        * For SQLite: `DATABASE_URL=sqlite://./ci.sqlite?mode=rwc`.
+        * `cargo build --features <db>`
+        * `sqlx database create`
+        * `sqlx migrate run --source migrations/<db>`
+        * `cargo test --no-run --features <db>`
+   * (Optional) If you add SQLx offline now, include `cargo sqlx prepare --check` as a non-blocking step.
+
+8. **CODEX guide**
+
+   * Ensure `codex/TASKS/CODEX_TODO.md` exists (use the ordered checklist previously discussed). If it exists, leave it.
+
+---
+
+### Verification (run these)
+
+```bash
+# 1) Format & lint
+cargo fmt --all
+cargo clippy -- -D warnings
+
+# 2) Build both features
+cargo build --features postgres
+cargo build --features sqlite
+
+# 3) Migrate both dialects locally
+export DATABASE_URL="sqlite://./dev.sqlite?mode=rwc"
+sqlx database create
+sqlx migrate run --source migrations/sqlite
+
+# For Postgres (if available in your environment)
+export DATABASE_URL="postgres://postgres:postgres@localhost:5432/surl"
+sqlx database create || true
+sqlx migrate run --source migrations/postgres
+
+# 4) Smoke run (either backend)
+SURL_ADDR=0.0.0.0:8080 \
+SURL_DATABASE_URL=sqlite://./dev.sqlite?mode=rwc \
+cargo run --features sqlite &
+sleep 1
+curl -sf http://localhost:8080/healthz | grep -q '^ok$'
+```
+
+---
+
+### Acceptance criteria
+
+* README renders correctly; clone URL is `pfahlr/surl`; code fences are closed.
+* `cargo build` succeeds for both `postgres` and `sqlite` features.
+* `sqlx migrate run` succeeds for both dialects (at least SQLite locally).
+* `GET /healthz` returns `ok` when run with either backend.
+* CI file exists and is valid.
+* Compose file is named `compose.yaml`.
+* `.env.example`, `.gitignore`, `.editorconfig`, `LICENSE` present.
+
+---
+
+### Commit
+
+When everything passes, make **one** commit with:
+
+**Commit message**
+
+```
+feat(baseline): bootstrap Axum app, dual-DB features, per-dialect migrations, CI, and docs
+
+- Fix README clone URL and code fences; add compose usage
+- Add .env.example, .gitignore, .editorconfig, LICENSE (MIT)
+- Implement config/db wiring with feature-gated sqlx migrators (pg/sqlite)
+- Provide minimal routes and /healthz
+- Add per-dialect 0001_init.sql (accounts, links, settings, link_visits)
+- CI: fmt+clippy, matrix build, migrate, and test compile
+- Rename docker.compose.yaml -> compose.yaml (if present)
+```
+
+**Output at the end**
+
+* The full commit message
+* A summary of modified files
+* `git status`
+
+---
+
+If any file already exists, **patch in place** rather than overwriting wholesale. Keep this change minimal, surgical, and verifiable.
