@@ -2,6 +2,9 @@
 name = "surl"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+authors = ["Rick Pfahl <pfahlr@users.noreply.github.com>"]
+description = "SURL — ultra-fast Rust short links with Postgres/SQLite features, cache-first redirects, admin regex policy, and privacy-aware analytics."
 
 [features]
 default = ["postgres"]
@@ -14,8 +17,17 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["trace"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 config = "0.14"
+regex = "1"
+anyhow = "1"
+thiserror = "1"
+
+# SQLx with runtime toggled by features
 sqlx = { version = "0.7", default-features = false }
+
+# (Optional later) moka, argon2, etc. — add when needed by tasks
+
+[dev-dependencies]

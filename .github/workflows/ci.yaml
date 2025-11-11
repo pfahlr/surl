@@ -1,18 +1,74 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+  pull_request:
+
 jobs:
-  test:
+  format_clippy:
+    name: fmt + clippy
     runs-on: ubuntu-latest
-    strategy:
-      matrix: { db: [postgres, sqlite] }
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Build & test (${{ matrix.db }})
+      - run: cargo fmt --all --check
+      - run: cargo clippy -- -D warnings
+
+  build_and_migrate:
+    name: build & migrate (${{ matrix.db }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [postgres, sqlite]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: surl
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" 
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install sqlx-cli
         run: |
           if [ "${{ matrix.db }}" = "postgres" ]; then
-            cargo test --features postgres
+            cargo install sqlx-cli --no-default-features --features postgres,runtime-tokio-rustls --locked
           else
-            cargo test --features sqlite
+            cargo install sqlx-cli --no-default-features --features sqlite,runtime-tokio-rustls --locked
+          fi
+
+      - name: Build (${{ matrix.db }})
+        run: |
+          if [ "${{ matrix.db }}" = "postgres" ]; then
+            cargo build --features postgres --verbose
+          else
+            cargo build --features sqlite --verbose
+          fi
+
+      - name: Run migrations (${{ matrix.db }})
+        env:
+          DATABASE_URL: ${{ matrix.db == 'postgres' && 'postgres://postgres:postgres@localhost:5432/surl' || 'sqlite://./ci.sqlite?mode=rwc' }}
+        run: |
+          if [ "${{ matrix.db }}" = "postgres" ]; then
+            sqlx database create
+            sqlx migrate run --source migrations/postgres
+          else
+            sqlx database create
+            sqlx migrate run --source migrations/sqlite
+          fi
+
+      - name: Test compile (${{ matrix.db }})
+        run: |
+          if [ "${{ matrix.db }}" = "postgres" ]; then
+            cargo test --no-run --features postgres
+          else
+            cargo test --no-run --features sqlite
           fi
