@@ -1,13 +1,13 @@
-use axum::{routing::get, Router};
 use std::net::SocketAddr;
+use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod app;
 mod config;
 mod db;
 mod models;
-mod slug_policy;
 mod routes;
+mod slug_policy;
 
 use app::AppState;
 use config::AppConfig;
@@ -16,9 +16,9 @@ use config::AppConfig;
 async fn main() -> anyhow::Result<()> {
   // logging
   tracing_subscriber::registry()
-  .with(tracing_subscriber::EnvFilter::from_default_env())
-  .with(tracing_subscriber::fmt::layer())
-  .init();
+    .with(tracing_subscriber::EnvFilter::from_default_env())
+    .with(tracing_subscriber::fmt::layer())
+    .init();
 
   // load config
   let cfg = AppConfig::from_env()?;
@@ -31,14 +31,10 @@ async fn main() -> anyhow::Result<()> {
   let state = AppState::new(cfg, pool);
 
   // router
-  let app = Router::new()
-  .route("/healthz", get(|| async { "ok" }))
-  .merge(routes::router(state.clone()))
-  .layer(tower_http::trace::TraceLayer::new_for_http());
+  let app = app::router(state);
 
   tracing::info!("SURL listening on {}", addr);
-  axum::Server::bind(&addr)
-  .serve(app.into_make_service())
-  .await?;
+  let listener = TcpListener::bind(addr).await?;
+  axum::serve(listener, app.into_make_service()).await?;
   Ok(())
 }

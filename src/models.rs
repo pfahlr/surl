@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct CreateLinkForm {
   pub url: String,

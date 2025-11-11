@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  format_clippy:
+  fmt_clippy:
     name: fmt + clippy
     runs-on: ubuntu-latest
     steps:
@@ -50,17 +50,17 @@ jobs:
           if [ "${{ matrix.db }}" = "postgres" ]; then
             cargo build --features postgres --verbose
           else
-            cargo build --features sqlite --verbose
+            cargo build --no-default-features --features sqlite --verbose
           fi
 
       - name: Run migrations (${{ matrix.db }})
-        env:
-          DATABASE_URL: ${{ matrix.db == 'postgres' && 'postgres://postgres:postgres@localhost:5432/surl' || 'sqlite://./ci.sqlite?mode=rwc' }}
         run: |
           if [ "${{ matrix.db }}" = "postgres" ]; then
+            export DATABASE_URL=postgres://postgres:postgres@localhost:5432/surl
             sqlx database create
             sqlx migrate run --source migrations/postgres
           else
+            export DATABASE_URL=sqlite://./ci.sqlite?mode=rwc
             sqlx database create
             sqlx migrate run --source migrations/sqlite
           fi
@@ -70,5 +70,5 @@ jobs:
           if [ "${{ matrix.db }}" = "postgres" ]; then
             cargo test --no-run --features postgres
           else
-            cargo test --no-run --features sqlite
+            cargo test --no-run --no-default-features --features sqlite
           fi

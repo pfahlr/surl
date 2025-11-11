@@ -14,7 +14,7 @@ sqlite   = ["sqlx/sqlite",   "sqlx/runtime-tokio-rustls"]
 [dependencies]
 axum = "0.7"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-tower = "0.4"
+tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.5", features = ["trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
@@ -26,8 +26,9 @@ anyhow = "1"
 thiserror = "1"
 
 # SQLx with runtime toggled by features
-sqlx = { version = "0.7", default-features = false }
+sqlx = { version = "0.7", default-features = false, features = ["macros", "migrate"] }
 
 # (Optional later) moka, argon2, etc. — add when needed by tasks
 
 [dev-dependencies]
+http-body-util = "0.1"

@@ -6,12 +6,19 @@ pub struct AppConfig {
   pub addr: String,
   pub database_url: String,
   pub pool_max: u32,
+  #[allow(dead_code)]
   pub force_status_301: bool,
+  #[allow(dead_code)]
   pub reserved_slugs: Vec<String>,
-  pub analytics_mode: String,   // none | count_only | full (parsed later)
+  #[allow(dead_code)]
+  pub analytics_mode: String, // none | count_only | full (parsed later)
+  #[allow(dead_code)]
   pub slug_regex: String,
+  #[allow(dead_code)]
   pub ip_anonymize: bool,
+  #[allow(dead_code)]
   pub proxy_trust_cidrs: Vec<String>,
+  #[allow(dead_code)]
   pub admin_token: String,
 }
 
@@ -22,7 +29,10 @@ impl AppConfig {
     let addr = env::var("SURL_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".into());
     let database_url = env::var("SURL_DATABASE_URL")
       .unwrap_or_else(|_| "sqlite:////dev/shm/surl.sqlite?mode=rwc".into());
-    let pool_max = env::var("SURL_POOL_MAX").ok().and_then(|s| s.parse().ok()).unwrap_or(16);
+    let pool_max = env::var("SURL_POOL_MAX")
+      .ok()
+      .and_then(|s| s.parse().ok())
+      .unwrap_or(16);
     let force_status_301 = env::var("SURL_FORCE_STATUS_301")
       .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
       .unwrap_or(true);

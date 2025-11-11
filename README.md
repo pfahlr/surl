@@ -9,7 +9,7 @@ Ultra-fast Rust link shortener with cache-first redirects, compile-time-selectab
 ## Features
 
 - ⚡ **Blazing hot path**: cache-first lookup → optional analytics → 301/302 redirect
-- 🧰 **Dual DB builds** (compile-time): `--features postgres` or `--features sqlite`
+- 🧰 **Dual DB builds** (compile-time): `--features postgres` (default) or `--no-default-features --features sqlite`
 - 🧪 **SQLx macros**: compile-time checked queries per backend
 - 🔤 **Admin slug policy**: regex-driven; intersected with URL-safe chars
 - 🔍 **Analytics modes**: `none`, `count_only`, `full` (IP/UA/Referer w/ anonymization)
@@ -31,7 +31,7 @@ Ultra-fast Rust link shortener with cache-first redirects, compile-time-selectab
 ```bash
 git clone https://github.com/pfahlr/surl.git
 cd surl
-````
+```
 
 #### Build (Postgres)
 
@@ -42,7 +42,7 @@ cargo build --release --features postgres
 #### Build (SQLite)
 
 ```bash
-cargo build --release --features sqlite
+cargo build --release --no-default-features --features sqlite
 ```
 
 ### 3) Configure env
@@ -55,10 +55,10 @@ SURL_DATABASE_URL=postgres://postgres:postgres@localhost:5432/surl
 SURL_POOL_MAX=16
 SURL_FORCE_STATUS_301=true
 SURL_RESERVED_SLUGS=admin,login,me,shorten,healthz,assets,static,api
-SURL_ANALYTICS_MODE=count_only          # none | count_only | full
-SURL_SLUG_REGEX=^[A-Za-z0-9]{5,10}$     # default policy
-SURL_IP_ANONYMIZE=true                  # for full analytics
-SURL_PROXY_TRUST_CIDRS=127.0.0.1/32     # set to your LB/ingress CIDRs
+SURL_ANALYTICS_MODE=count_only
+SURL_SLUG_REGEX=^[A-Za-z0-9]{5,10}$
+SURL_IP_ANONYMIZE=true
+SURL_PROXY_TRUST_CIDRS=127.0.0.1/32
 SURL_ADMIN_TOKEN=change-me
 ```
 
@@ -103,10 +103,19 @@ cargo run --features postgres
 SURL_ADDR=0.0.0.0:8080 \
 SURL_DATABASE_URL=sqlite:////dev/shm/surl.sqlite?mode=rwc \
 SURL_POOL_MAX=8 \
-cargo run --features sqlite
+cargo run --no-default-features --features sqlite
 ```
 
 Open: [http://localhost:8080/healthz](http://localhost:8080/healthz) → `ok`
+
+### Docker Compose (PG)
+
+Use the provided `compose.yaml` to start a Postgres database plus the app with matching env defaults:
+
+```bash
+docker compose up -d
+curl -sf http://localhost:8080/healthz
+```
 
 ---
 
@@ -231,8 +240,10 @@ sqlite   = ["sqlx/sqlite",   "sqlx/runtime-tokio-rustls"]
 * **SQLite build**
 
   ```bash
-  cargo build --release --features sqlite
+  cargo build --release --no-default-features --features sqlite
   ```
+
+> Postgres is the default feature, so always pass `--no-default-features` when targeting SQLite-only builds.
 
 ---
 
@@ -248,7 +259,7 @@ docker build -t surl:pg --build-arg DB=postgres .
 docker build -t surl:sqlite --build-arg DB=sqlite .
 ```
 
-**docker-compose.yaml (PG)**
+**compose.yaml (PG)** — run with `docker compose up -d` for a full Postgres stack.
 
 ```yaml
 version: "3.9"
@@ -330,7 +341,7 @@ cargo clippy -- -D warnings
 
 # Tests (both backends)
 cargo test --features postgres
-cargo test --features sqlite
+cargo test --no-default-features --features sqlite
 ```
 
 ### Makefile (optional)
@@ -339,11 +350,11 @@ cargo test --features sqlite
 build-pg:
   cargo build --release --features postgres
 build-sqlite:
-  cargo build --release --features sqlite
+  cargo build --release --no-default-features --features sqlite
 run-pg:
   SURL_ADDR=0.0.0.0:8080 SURL_DATABASE_URL=postgres://... cargo run --features postgres
 run-sqlite:
-  SURL_ADDR=0.0.0.0:8080 SURL_DATABASE_URL=sqlite:////dev/shm/surl.sqlite?mode=rwc cargo run --features sqlite
+  SURL_ADDR=0.0.0.0:8080 SURL_DATABASE_URL=sqlite:////dev/shm/surl.sqlite?mode=rwc cargo run --no-default-features --features sqlite
 ```
 
 ---
@@ -403,5 +414,5 @@ Issues and PRs welcome. Please keep changes small, include tests, and ensure bot
 
 ```bash
 cargo test --features postgres
-cargo test --features sqlite
+cargo test --no-default-features --features sqlite
 ```
